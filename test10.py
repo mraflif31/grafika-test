@@ -3,9 +3,35 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from math import *
+import random
+import array
 
 PI = 3.1415926535897932384626433832795
 rot = 0
+arrayP = []
+arrayQ = []
+LIFE = 20
+
+maxDistance = 15.0
+minRainSize = 0.3
+maxRainSize = 1.5
+
+sx0 = 7.1
+sy0 = 0.7
+sz0 = 0.5
+sx1 = 7.5
+sy1 = 0.8
+sz1 = 0.7
+
+rx0 = -10.0
+ry0 = 1.0
+rz0 = -10.0
+rx1 = 10.0
+ry1 = 8.0
+rz1 = 10.0
+
+def calcDistance(x0, y0, z0, x1, y1, z1):
+	return sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)
 			
 def Cyl(x, y, z, length, radius, smoothness):
 	global rot
@@ -65,9 +91,153 @@ def Squa(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3):
 	glVertex3f(x3, y3, z3)
 	glEnd()
 	
+def Poi(x, y, z, r, g, b, a):
+	glBegin(GL_POINTS)
+	glColor4f(r,g,b,a)
+	glVertex3f(x, y, z)
+	glEnd()
+	
+def getTup3f(x0, y0, z0, x1, y1, z1):
+	a = random.uniform(x0,x1)
+	b = random.uniform(y0,y1)
+	c = random.uniform(z0,z1)
+	x = [a,b,c]
+	return x
+	
+def getTupL3f(x0, y0, z0, x1, y1, z1):
+	a = random.uniform(x0,x1)
+	b = random.uniform(y0,y1)
+	c = random.uniform(z0,z1)
+	d = random.uniform(LIFE/4, LIFE)
+	x = [a,b,c,d]
+	return x
+	
+def initArrayP(n, x0, y0, z0, x1, y1, z1):
+	global arrayP
+	
+	x = 0
+
+	while (x < n):
+		
+		temp = getTupL3f(x0, y0, z0, x1, y1, z1)
+		
+		a = round(temp[0],3)
+		b = round(temp[1],3)
+		c = round(temp[2],3)
+		d = temp[3]
+		
+		ar1 = [a, b, c, d]
+		arrayP.append(ar1)
+		x += 1
+
+def printArrayP(n):
+	x = 0
+	
+	while (x < n):
+		Poi(arrayP[x][0],arrayP[x][1],arrayP[x][2],1.0, 1.0, 1.0, 1.0)
+		
+		x += 1
+		
+def renderArrayP(n):
+	x = 0
+	while (x < n):
+		Poi(arrayP[x][0],arrayP[x][1],arrayP[x][2],1.0, 1.0, 1.0, sin(arrayP[x][3]/LIFE))
+		
+		x += 1
+		
+def add2ArrayP(n, x0, y0, z0, x1, y1, z1):
+	global arrayP
+	
+	x = 0
+	while (x < n):
+		
+		a = random.uniform(x0,x1)
+		b = random.uniform(y0,y1)
+		c = random.uniform(z0,z1)
+		d = random.uniform(0.05,0.25)
+		
+		arrayP[x][0] += a
+		arrayP[x][1] += b
+		arrayP[x][2] += c
+		arrayP[x][3] -= d
+		
+		if (arrayP[x][3] < 0): 
+			arrayP[x] = getTupL3f(sx0, sy0, sz0, sx1, sy1, sz1)
+		
+		x += 1
+		
+def initArrayQ(n, x0, y0, z0, x1, y1, z1):
+	global arrayQ
+	
+	x = 0
+
+	while (x < n):
+		
+		temp = getTup3f(x0, y0, z0, x1, y1, z1)
+		
+		a = round(temp[0],3)
+		b = round(temp[1],3)
+		c = round(temp[2],3)
+		
+		ar1 = [a, b, c]
+		arrayQ.append(ar1)
+		x += 1
+
+def printArrayQ(n):
+	x = 0
+	
+	while (x < n):
+		t = random.randint(1,3)
+		add = 0
+		
+		a = arrayQ[x][0]
+		b = arrayQ[x][1]
+		c = arrayQ[x][2]
+		
+		while (t > 0):
+			Poi(a, b + add, c, 0.7, 0.7, 0.8, 0.5)
+			t -= 1
+			add += 0.02
+		
+		x += 1
+		
+def renderArrayP(n):
+	x = 0
+	while (x < n):
+		Poi(arrayP[x][0],arrayP[x][1],arrayP[x][2],1.0, 1.0, 1.0, sin(arrayP[x][3]/LIFE))
+		
+		x += 1
+		
+def add2ArrayQ(n, x0, y0, z0, x1, y1, z1):
+	global arrayQ
+	
+	x = 0
+	while (x < n):
+		
+		a = random.uniform(x0,x1)
+		b = random.uniform(y0,y1)
+		c = random.uniform(z0,z1)
+		
+		arrayQ[x][0] += a
+		arrayQ[x][1] += b
+		arrayQ[x][2] += c
+		
+		x += 1
+		
+def killY(n, threshold, x0, y0, z0, x1, y1, z1):
+	global arrayQ
+	
+	x = 0
+	while (x < n):
+		if (arrayQ[x][1] < threshold):
+			arrayQ[x] = getTup3f(x0, y0, z0, x1, y1, z1)
+		x += 1
+	
 def main():
 	
     global rot
+    global arrayP
+    global arrayQ
     pygame.init()
     display = (800,600)
     pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
@@ -83,6 +253,18 @@ def main():
     glTranslatef(0,0, -20)
 
     glRotatef(25, 2, 1, 0)
+    
+    #glPointSize(3)
+    
+    nSmoke = 500
+    nRain = 1000
+    
+    initArrayP(nSmoke, sx0, sy0, sz0, sx1, sy1, sz1)
+    initArrayQ(nRain, rx0, ry0, rz0, rx1, ry1, rz1)
+    
+    yThreshold = 2.0
+    
+    #print(arrayP)
 
     while True:
         for event in pygame.event.get():
@@ -327,12 +509,22 @@ def main():
         Cyl(6.0, 0.6, 4.0, 0.3, 0.8, 12)
         Cyl(6.0, 0.6, 0.3, 3.7, 0.1, 12)	
         glPopMatrix()
+        
+        #killY(nSmoke, yThreshold, sx0, sy0, sz0, sx1, sy1, sz1)
+        glPointSize(5)
+        renderArrayP(nSmoke)
+        add2ArrayP(nSmoke, 0.0, 0.0, -0.02, 0.03, 0.01, 0.02)
+        
+        glPointSize(1)
+        printArrayQ(nRain)
+        add2ArrayQ(nRain, 0.0, -0.4, 0.0, 0.0, -0.4, 0.0)
+        killY(nRain, 1.0, rx0, ry0, rz0, rx1, ry1, rz1)
 		
         #draw_circle(0.0, 0.0, 0.5, 12)
         #draw_tube()
-        rot = rot - 1
+        rot = rot - 4
         
         pygame.display.flip()
-        pygame.time.wait(0)
+        pygame.time.wait(10)
 		
 main()
