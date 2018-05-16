@@ -5,16 +5,14 @@ from OpenGL.GLU import *
 from math import *
 import random
 import array
+import numpy
 
 PI = 3.1415926535897932384626433832795
 rot = 0
 arrayP = []
 arrayQ = []
 LIFE = 20
-
-maxDistance = 15.0
-minRainSize = 0.3
-maxRainSize = 1.5
+dropLength = 3
 
 sx0 = 7.1
 sy0 = 0.7
@@ -24,14 +22,11 @@ sy1 = 0.8
 sz1 = 0.7
 
 rx0 = -10.0
-ry0 = 1.0
+ry0 = 3.0
 rz0 = -10.0
 rx1 = 10.0
 ry1 = 8.0
 rz1 = 10.0
-
-def calcDistance(x0, y0, z0, x1, y1, z1):
-	return sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)
 			
 def Cyl(x, y, z, length, radius, smoothness):
 	global rot
@@ -187,7 +182,7 @@ def printArrayQ(n):
 	x = 0
 	
 	while (x < n):
-		t = random.randint(1,3)
+		t = random.randint(1,dropLength)
 		add = 0
 		
 		a = arrayQ[x][0]
@@ -238,12 +233,21 @@ def main():
     global rot
     global arrayP
     global arrayQ
+    
+    global dropLength
+    
     pygame.init()
     display = (800,600)
     pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
 
     glEnable(GL_BLEND)
     glEnable(GL_DEPTH_TEST)
+    
+    #press vaiable
+    rot_min = 1
+    rainSize = 1
+    wind = 0
+    #dropLength = 3
     
     glDepthFunc(GL_LESS)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -256,8 +260,8 @@ def main():
     
     #glPointSize(3)
     
-    nSmoke = 500
-    nRain = 1000
+    nSmoke = 200
+    nRain = 500
     
     initArrayP(nSmoke, sx0, sy0, sz0, sx1, sy1, sz1)
     initArrayQ(nRain, rx0, ry0, rz0, rx1, ry1, rz1)
@@ -273,17 +277,27 @@ def main():
                 quit()
 
             if event.type == pygame.KEYDOWN:
+                
                 if event.key == pygame.K_LEFT:
                     #glTranslatef(-0.5,0,0)
                     glRotatef(10, 0, 1, 0)
                 if event.key == pygame.K_RIGHT:
                     #glTranslatef(0.5,0,0)
                     glRotatef(-10, 0, 1, 0)
-
                 if event.key == pygame.K_UP:
                     glTranslatef(0,1,0)
                 if event.key == pygame.K_DOWN:
                     glTranslatef(0,-1,0)
+                if event.key == pygame.K_SPACE:
+					rot_min = 5
+					rainSize = 2
+					wind = 3
+					dropLength = 5
+            else:
+				rot_min = 1
+				rainSize = 1
+				wind = 0
+				dropLength = 3
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 5:
@@ -497,6 +511,8 @@ def main():
         #glMatrixMode(GL_MODELVIEW)
         glPushMatrix()
         
+        #Cyl(-3.5, 7.0, 16.0, 1.0, 1.0, 12)
+        
         glRotatef(1, 0, 0, 1)
         Cyl(1.0, 0.6, 0.0, 0.3, 0.8, 12)
         Cyl(1.0, 0.6, 4.0, 0.3, 0.8, 12)
@@ -513,16 +529,16 @@ def main():
         #killY(nSmoke, yThreshold, sx0, sy0, sz0, sx1, sy1, sz1)
         glPointSize(5)
         renderArrayP(nSmoke)
-        add2ArrayP(nSmoke, 0.0, 0.0, -0.02, 0.03, 0.01, 0.02)
+        add2ArrayP(nSmoke, 0.1 * wind, 0.0, -0.02, 0.03, 0.01, 0.02)
         
         glPointSize(1)
         printArrayQ(nRain)
-        add2ArrayQ(nRain, 0.0, -0.4, 0.0, 0.0, -0.4, 0.0)
+        add2ArrayQ(nRain, 0.1 * wind, -0.4, 0.0, 0.1 * wind, -0.4, 0.0)
         killY(nRain, 1.0, rx0, ry0, rz0, rx1, ry1, rz1)
 		
         #draw_circle(0.0, 0.0, 0.5, 12)
         #draw_tube()
-        rot = rot - 4
+        rot = rot - rot_min
         
         pygame.display.flip()
         pygame.time.wait(10)
